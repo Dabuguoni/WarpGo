@@ -1,0 +1,148 @@
+name: 发布新版本
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_id: ${{ steps.create_release.outputs.id }}
+    steps:
+      - name: 创建 Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: WarpGo ${{ github.ref }}
+          body: |
+            ## 🎉 WarpGo 新版本发布
+
+            ### 📦 下载链接
+            - **Windows**: 下载 `.msi` 或 `.exe` 文件
+            - **macOS**: 下载 `.dmg` 文件
+            - **Linux**: 下载 `.AppImage` 或 `.deb` 文件
+
+            ### 🔧 安装说明
+            1. 下载对应平台的安装包
+            2. 运行安装程序
+            3. 首次使用需要配置 Warp 账户信息
+
+            ### ⚠️ 注意事项
+            - 确保已安装 mitmproxy（如需使用代理功能）
+            - Windows 用户可能需要允许防火墙访问
+
+            ---
+            完整更新日志请查看提交历史。
+          draft: false
+          prerelease: false
+
+  build-and-upload:
+    needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target universal-apple-darwin'
+          - platform: 'ubuntu-20.04'
+            args: ''
+          - platform: 'windows-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: WarpGo-manager/package-lock.json
+
+    - name: 安装 Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+    - name: 缓存 Rust 依赖
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          WarpGo-manager/src-tauri/target/
+        key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: 安装 Linux 依赖
+      if: matrix.platform == 'ubuntu-20.04'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+
+    - name: 安装前端依赖
+      working-directory: WarpGo-manager
+      run: npm ci
+
+    - name: 构建应用
+      working-directory: WarpGo-manager
+      run: |
+        npm install -g @tauri-apps/cli
+        npm run tauri build ${{ matrix.args }}
+
+    - name: 上传 Release 资产 (Linux)
+      if: matrix.platform == 'ubuntu-20.04'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: WarpGo-manager/src-tauri/target/release/bundle/appimage/warp-account-manager_1.0.0_amd64.AppImage
+        asset_name: WarpGo-Linux-x64.AppImage
+        asset_content_type: application/octet-stream
+
+    - name: 上传 Release 资产 (Linux DEB)
+      if: matrix.platform == 'ubuntu-20.04'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: WarpGo-manager/src-tauri/target/release/bundle/deb/warp-account-manager_1.0.0_amd64.deb
+        asset_name: WarpGo-Linux-x64.deb
+        asset_content_type: application/vnd.debian.binary-package
+
+    - name: 上传 Release 资产 (Windows MSI)
+      if: matrix.platform == 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: WarpGo-manager/src-tauri/target/release/bundle/msi/WarpGo_1.0.0_x64_en-US.msi
+        asset_name: WarpGo-Windows-x64.msi
+        asset_content_type: application/octet-stream
+
+    - name: 上传 Release 资产 (macOS)
+      if: matrix.platform == 'macos-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: WarpGo-manager/src-tauri/target/universal-apple-darwin/release/bundle/dmg/WarpGo_1.0.0_universal.dmg
+        asset_name: WarpGo-macOS-Universal.dmg
+        asset_content_type: application/octet-stream

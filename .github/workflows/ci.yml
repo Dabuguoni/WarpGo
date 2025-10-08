@@ -1,0 +1,105 @@
+name: 持续集成
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: WarpGo-manager/package-lock.json
+
+    - name: 安装 Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: 缓存 Rust 依赖
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          WarpGo-manager/src-tauri/target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: 安装 Linux 依赖
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev
+
+    - name: 安装前端依赖
+      working-directory: WarpGo-manager
+      run: npm ci
+
+    - name: 前端类型检查
+      working-directory: WarpGo-manager
+      run: npm run build
+
+    - name: Rust 代码检查
+      working-directory: WarpGo-manager/src-tauri
+      run: |
+        cargo fmt --all -- --check
+        cargo clippy -- -D warnings
+
+    - name: 运行 Rust 测试
+      working-directory: WarpGo-manager/src-tauri
+      run: cargo test
+
+  quick-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: WarpGo-manager/package-lock.json
+
+    - name: 安装 Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: 缓存 Rust 依赖
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          WarpGo-manager/src-tauri/target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: 安装 Linux 依赖
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev
+
+    - name: 安装前端依赖
+      working-directory: WarpGo-manager
+      run: npm ci
+
+    - name: 快速构建测试
+      working-directory: WarpGo-manager
+      run: |
+        npm install -g @tauri-apps/cli
+        npm run tauri build -- --debug

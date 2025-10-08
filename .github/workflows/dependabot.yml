@@ -1,0 +1,79 @@
+name: 依赖更新检查
+
+on:
+  schedule:
+    # 每周一上午 9 点检查依赖更新
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 设置 Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: 安装 Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: 检查 npm 依赖更新
+      working-directory: WarpGo-manager
+      run: |
+        npm outdated || true
+        echo "=== 可用的 npm 更新 ===" >> ../dependency-report.md
+        npm outdated --json >> ../dependency-report.md || true
+
+    - name: 检查 Cargo 依赖更新
+      working-directory: WarpGo-manager/src-tauri
+      run: |
+        cargo install cargo-outdated
+        echo "=== 可用的 Cargo 更新 ===" >> ../../dependency-report.md
+        cargo outdated >> ../../dependency-report.md || true
+
+    - name: 创建 Issue（如有更新）
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          
+          if (fs.existsSync('dependency-report.md')) {
+            const report = fs.readFileSync('dependency-report.md', 'utf8');
+            
+            if (report.trim()) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `📦 依赖更新报告 - ${new Date().toISOString().split('T')[0]}`,
+                body: `## 🔄 依赖更新检查报告
+
+以下是检测到的可用依赖更新：
+
+\`\`\`
+${report}
+\`\`\`
+
+### 📋 建议操作
+1. 检查更新的兼容性
+2. 更新依赖版本
+3. 运行测试确保功能正常
+4. 提交更新
+
+### ⚠️ 注意事项
+- 主要版本更新可能包含破坏性变更
+- 建议先在开发分支测试
+- 更新后记得运行完整的测试套件
+
+---
+*此报告由 GitHub Actions 自动生成*`,
+                labels: ['dependencies', 'maintenance']
+              });
+            }
+          }
