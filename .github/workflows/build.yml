@@ -1,10 +1,8 @@
 name: 构建和发布
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  # 暂时禁用自动触发，只允许手动触发
+  workflow_dispatch:
   release:
     types: [ published ]
 

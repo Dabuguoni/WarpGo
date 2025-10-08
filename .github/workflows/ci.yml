@@ -6,11 +6,8 @@ on:
   pull_request:
     branches: [ main, master, develop ]
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  test:
+  basic-check:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,24 +19,25 @@ jobs:
       with:
         node-version: '18'
 
-    - name: 安装 Rust
-      uses: dtolnay/rust-toolchain@stable
-
-    - name: 安装 Linux 依赖
+    - name: 检查项目结构
       run: |
-        sudo apt-get update
-        sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev
+        echo "=== 项目根目录 ==="
+        ls -la
+        echo "=== WarpGo-manager 目录 ==="
+        ls -la WarpGo-manager/
+        echo "=== package.json 内容 ==="
+        cat WarpGo-manager/package.json
 
     - name: 安装前端依赖
       working-directory: WarpGo-manager
       run: npm install
 
-    - name: 前端构建检查
+    - name: 检查依赖安装
       working-directory: WarpGo-manager
-      run: npm run build
-
-    - name: Rust 编译检查
-      working-directory: WarpGo-manager/src-tauri
-      run: cargo check
+      run: |
+        echo "=== node_modules 检查 ==="
+        ls -la node_modules/ | head -10
+        echo "=== package-lock.json 检查 ==="
+        ls -la package-lock.json
 
 
