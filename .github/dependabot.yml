@@ -9,9 +9,9 @@ updates:
       time: "09:00"
     open-pull-requests-limit: 5
     reviewers:
-      - "your-github-username"  # 替换为你的 GitHub 用户名
+      - "Dabuguoni"
     assignees:
-      - "your-github-username"  # 替换为你的 GitHub 用户名
+      - "Dabuguoni"
     commit-message:
       prefix: "npm"
       include: "scope"
@@ -28,9 +28,9 @@ updates:
       time: "09:00"
     open-pull-requests-limit: 5
     reviewers:
-      - "your-github-username"  # 替换为你的 GitHub 用户名
+      - "Dabuguoni"
     assignees:
-      - "your-github-username"  # 替换为你的 GitHub 用户名
+      - "Dabuguoni"
     commit-message:
       prefix: "cargo"
       include: "scope"
@@ -47,9 +47,9 @@ updates:
       time: "09:00"
     open-pull-requests-limit: 3
     reviewers:
-      - "your-github-username"  # 替换为你的 GitHub 用户名
+      - "Dabuguoni"
     assignees:
-      - "your-github-username"  # 替换为你的 GitHub 用户名
+      - "Dabuguoni"
     commit-message:
       prefix: "ci"
       include: "scope"

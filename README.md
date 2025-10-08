@@ -2,9 +2,9 @@
 
 <div align="center">
 
-[![构建状态](https://github.com/your-username/WarpGo/workflows/构建和发布/badge.svg)](https://github.com/your-username/WarpGo/actions)
-[![持续集成](https://github.com/your-username/WarpGo/workflows/持续集成/badge.svg)](https://github.com/your-username/WarpGo/actions)
-[![GitHub release](https://img.shields.io/github/v/release/your-username/WarpGo)](https://github.com/your-username/WarpGo/releases)
+[![构建状态](https://github.com/Dabuguoni/WarpGo/workflows/构建和发布/badge.svg)](https://github.com/Dabuguoni/WarpGo/actions)
+[![持续集成](https://github.com/Dabuguoni/WarpGo/workflows/持续集成/badge.svg)](https://github.com/Dabuguoni/WarpGo/actions)
+[![GitHub release](https://img.shields.io/github/v/release/Dabuguoni/WarpGo)](https://github.com/Dabuguoni/WarpGo/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [English](#english) | [中文](#中文)
