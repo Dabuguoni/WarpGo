@@ -28,8 +28,6 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: WarpGo-manager/package-lock.json
 
     - name: 安装 Rust
       uses: dtolnay/rust-toolchain@stable
@@ -53,7 +51,7 @@ jobs:
 
     - name: 安装前端依赖
       working-directory: WarpGo-manager
-      run: npm ci
+      run: npm install
 
     - name: 安装 Tauri CLI
       working-directory: WarpGo-manager

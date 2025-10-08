@@ -1,9 +1,7 @@
 name: 依赖更新检查
 
 on:
-  schedule:
-    # 每周一上午 9 点检查依赖更新
-    - cron: '0 9 * * 1'
+  # 暂时禁用自动运行，只允许手动触发
   workflow_dispatch:
 
 jobs:
